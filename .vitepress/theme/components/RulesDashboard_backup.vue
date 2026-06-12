@@ -194,8 +194,67 @@ const selectCategory = (catId) => {
         </div>
       </header>
 
+      <!-- Essential Server Info Cards (Compact) -->
+      <section class="info-grid">
+        <div class="info-card">
+          <div class="card-icon-wrapper blue-icon">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <div class="card-text">
+            <h3>Свободные Сражения</h3>
+            <p>На сервере разрешены <strong>PvP и гриферство</strong>. Выживание и союзы — часть процесса.</p>
+          </div>
+        </div>
 
+        <div class="info-card">
+          <div class="card-icon-wrapper red-icon">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          </div>
+          <div class="card-text">
+            <h3>Полномочия Администрации</h3>
+            <p>Администрация может ограничивать доступ за деструктивные действия вне правил.</p>
+          </div>
+        </div>
+      </section>
 
+      <!-- Premium Search Control Panel -->
+      <div class="control-panel">
+        <div class="search-wrapper">
+          <svg class="search-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="Поиск правил, наказаний или софта..." 
+            class="search-input"
+          />
+          <div class="search-shortcut" v-if="!searchQuery">⌘ K</div>
+          <button v-if="searchQuery" @click="searchQuery = ''" class="clear-search">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <nav class="navigation-tabs">
+          <button :class="['tab-btn', { active: activeSection === 'all' }]" @click="selectCategory('all')">Все</button>
+          <button :class="['tab-btn', { active: activeSection === 'discord' }]" @click="selectCategory('discord')">Discord</button>
+          <button :class="['tab-btn', { active: activeSection === 'chat' }]" @click="selectCategory('chat')">Чат</button>
+          <button :class="['tab-btn', { active: activeSection === 'gameplay' }]" @click="selectCategory('gameplay')">Игровой процесс</button>
+          <button :class="['tab-btn', { active: activeSection === 'checks' }]" @click="selectCategory('checks')">Проверки</button>
+          <button :class="['tab-btn', { active: activeSection === 'software' }]" @click="selectCategory('software')">Софт</button>
+        </nav>
+      </div>
+
+      <!-- Search Summary -->
+      <div v-if="searchQuery" class="search-summary">
+        Найдено: <span>{{ filteredSections.reduce((sum, s) => sum + s.rules.length, 0) + filteredSoftware.length }}</span>
+      </div>
 
       <!-- Main Content -->
       <main class="rules-main-content">
@@ -279,33 +338,6 @@ const selectCategory = (catId) => {
           </div>
         </section>
       </main>
-
-      <!-- Essential Server Info Cards (Moved down) -->
-      <section class="info-grid" style="margin-top: 50px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 40px;">
-        <div class="info-card">
-          <div class="card-icon-wrapper blue-icon">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-            </svg>
-          </div>
-          <div class="card-text">
-            <h3>Свободные Сражения</h3>
-            <p>На сервере разрешены <strong>PvP и гриферство</strong>. Выживание и союзы — часть процесса.</p>
-          </div>
-        </div>
-
-        <div class="info-card">
-          <div class="card-icon-wrapper red-icon">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-          </div>
-          <div class="card-text">
-            <h3>Полномочия Администрации</h3>
-            <p>Администрация может ограничивать доступ за деструктивные действия вне правил.</p>
-          </div>
-        </div>
-      </section>
 
       <footer class="rules-footer">
         <p>&copy; 2026 OrbitalMC. Все права защищены.</p>
@@ -519,21 +551,28 @@ p { line-height: 1.5; margin: 0; }
 
 .search-input {
   width: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 14px 44px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 18px 50px;
   color: var(--c-text);
   font-family: var(--font-sans);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   outline: none;
-  transition: var(--transition-fast);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .search-input:focus {
   border-color: var(--c-header);
-  background: rgba(0, 0, 0, 0.6);
-  box-shadow: 0 0 0 3px rgba(255, 110, 122, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(255, 110, 122, 0.15), 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
 }
 
 .search-shortcut {
@@ -555,32 +594,29 @@ p { line-height: 1.5; margin: 0; }
 .clear-search:hover { color: var(--c-text); background: rgba(255,255,255,0.1); }
 
 .navigation-tabs {
-  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  display: flex; flex-wrap: wrap; gap: 8px;
 }
 
 .tab-btn {
-  background: rgba(0, 0, 0, 0.4);
+  background: transparent;
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 8px 16px;
+  border-radius: 10px;
+  padding: 8px 14px;
   color: var(--c-mid-gray);
   font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition-fast);
 }
 
 .tab-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--c-text);
-  border-color: rgba(255,255,255,0.15);
+  color: var(--c-text); background: rgba(255,255,255,0.05);
 }
 
 .tab-btn.active {
-  background: rgba(255, 110, 122, 0.15);
+  background: rgba(255, 110, 122, 0.1);
   border-color: var(--c-header);
-  color: #fff;
-  box-shadow: 0 0 15px rgba(255, 110, 122, 0.2);
+  color: var(--c-header);
 }
 
 /* Lists */
