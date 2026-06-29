@@ -1,8 +1,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-// Rules database
-const sections = [
+const currentMode = ref('smp')
+
+const switchMode = (mode) => {
+  currentMode.value = mode
+  toastText.value = mode === 'smp' ? 'Режим изменен: SMP (Классическое выживание)' : 'Режим изменен: GRIEF (Свободные сражения)'
+  showToast.value = true
+  setTimeout(() => { showToast.value = false }, 2500)
+}
+
+const smpSections = [
   {
     id: 'discord',
     title: 'Раздел 1. Правила общения в Discord',
@@ -10,9 +18,10 @@ const sections = [
     icon: 'discord',
     rules: [
       { id: '1.1', name: 'Спам', desc: 'Отправка трех и более однотипных сообщений в течение одной минуты.', punishment: 'Мут на 30 минут', severity: 'mute-low' },
-      { id: '1.2', name: 'Оскорбления', desc: 'Прямые или завуалированные оскорбления участников сервера, токсичное поведение.', punishment: 'Мут на 1 час', severity: 'mute' },
+      { id: '1.2', name: 'Оскорбления игроков', desc: 'Прямые или завуалированные оскорбления участников сервера, токсичное поведение.', punishment: 'Мут на 1 час', severity: 'mute' },
       { id: '1.3', name: 'Запрещенный контент', desc: 'Публикация медиафайлов, ссылок, стикеров или GIF-анимаций политического характера, а также материалов с рейтингом 18+ и шок-контента.', punishment: 'Мут на 1 день', severity: 'mute-high' },
-      { id: '1.4', name: 'Реклама', desc: 'Упоминание или публикация ссылок на сторонние проекты, серверы или ресурсы, не относящиеся к OrbitalMC.', punishment: 'Мут на 1 день', severity: 'mute-high' }
+      { id: '1.4', name: 'Реклама', desc: 'Упоминание или публикация ссылок на сторонние проекты, серверы или ресурсы, не относящиеся к OrbitalMC.', punishment: 'Мут на 1 день', severity: 'mute-high' },
+      { id: '1.5', name: 'Оскорбление проекта/сервера', desc: 'Публичное неуважительное отношение, оскорбления, токсичная критика или клевета в адрес проекта OrbitalMC, его персонала и администрации.', punishment: 'Мут на 1 день / Блокировка от 3 до 7 дней', severity: 'mute-high' }
     ]
   },
   {
@@ -26,22 +35,23 @@ const sections = [
       { id: '2.3', name: 'Капс', desc: 'Злоупотребление заглавными буквами в сообщениях (более 50% текста).', punishment: 'Мут на 15 минут', severity: 'mute-low' },
       { id: '2.4', name: 'Оскорбление игроков', desc: 'Унижение чести и достоинства других пользователей.', punishment: 'Мут на 30 минут', severity: 'mute' },
       { id: '2.5', name: 'Оскорбление администрации', desc: 'Неуважительное отношение к представителям команды проекта.', punishment: 'Мут на 1 час', severity: 'mute' },
-      { id: '2.6', name: 'Оскорбление проекта', desc: 'Публичная критика сервера в оскорбительной форме.', punishment: 'Мут на 2 часа', severity: 'mute' },
+      { id: '2.6', name: 'Оскорбление проекта/сервера', desc: 'Публичная критика или упоминание сервера, администрации или проекта в унизительной, оскорбительной или деструктивной форме.', punishment: 'Мут на 4 часа / Блокировка от 1 до 3 дней', severity: 'mute-high' },
       { id: '2.7', name: 'Реклама', desc: 'Упоминание сторонних серверов или сервисов.', punishment: 'Мут на 4 часа', severity: 'mute-med' }
     ]
   },
   {
     id: 'gameplay',
-    title: 'Раздел 3. Правила игрового процесса',
-    desc: 'Регулирование честной игры, экономики и безопасности сервера.',
+    title: 'Раздел 3. Правила игрового процесса (SMP)',
+    desc: 'Регулирование честной игры, экономики и безопасности на сервере SMP.',
     icon: 'gameplay',
     rules: [
       { id: '3.1', name: 'Использование запрещенного ПО', desc: 'Строго запрещено использование любых сторонних программ, модификаций, скриптов или инъекций, предоставляющих несправедливое преимущество перед другими игроками. Это включает (но не ограничивается) автоматизацию действий, получение скрытой информации об игровом мире, вмешательство в механики боя, передвижения и взаимодействия с окружением.', punishment: 'Блокировка по IP до 15 дней', severity: 'ban-high' },
-      { id: '3.2', name: 'Хранение запрещенного ПО', desc: 'Хранение читов и стороннего ПО на персональном компьютере разрешено исключительно для версий Minecraft ниже 1.21.11. Уточнение: В случае обнаружения подобного ПО при проверке, проверяющий обязан проанализировать логи и активность. Если будет доказан факт использования данного софта на сервере OrbitalMC — выдается блокировка.', punishment: 'Блокировка по IP до 15 дней (при доказанном факте использования на сервере)', severity: 'ban-high' },
+      { id: '3.2', name: 'Хранение запрещенного ПО', desc: 'Хранение читов и стороннего ПО на персональном компьютере разрешено исключительно для версий Minecraft ниже 1.21.11. Уточнение: В случае обнаружения подобного ПО при проверке, проверяющий обязан проанализировать логи и активность. Если будет доказан факт использования данного софта на сервере OrbitalMC — выдается блокировка.', punishment: 'Блокировка по IP до 15 дней (при доказанном факте использования)', severity: 'ban-high' },
       { id: '3.3', name: 'Использование уязвимостей (Багоюз)', desc: 'Намеренное использование недоработок сервера, плагинов или ванильных механик Minecraft для получения выгоды, обхода системных ограничений или дюпа предметов.', punishment: 'Блокировка от 7 до 15 дней', severity: 'ban-med' },
-      { id: '3.4', name: 'Вредительство и угроза стабильности', desc: 'Создание лаг-машин, намеренный вызов критических ошибок (краш), использование уязвимостей, разрушающих экономику сервера, и любые другие действия, направленные на дестабилизацию работы оборудования.', punishment: 'Блокировка по IP на 15 дней (с возможным изъятием имущества)', severity: 'ban-high' },
+      { id: '3.4', name: 'Вредительство и угроза стабильности', desc: 'Создание лаг-машин, намеренный вызов критических ошибок (краш), использование уязвимостей, разрушающих экономику сервера, и любые другие действия, направленные на дестабилизацию работы оборудования.', punishment: 'Блокировка по IP на 15 дней (с изъятием имущества)', severity: 'ban-high' },
       { id: '3.5', name: 'Некорректный никнейм', desc: 'Использование никнеймов, содержащих ненормативную лексику, оскорбления, рекламу или имитирующих префиксы администрации проекта.', punishment: 'Предупреждение / Блокировка до 15 дней', severity: 'warning' },
-      { id: '3.6', name: 'Уход от PvP через автоматизированные механизмы', desc: 'Запрещено использовать любые стационарные механизмы, конструкции или уязвимости для автоматической телепортации или выхода из боя во время активного режима PvP (например, стазис-камеры с эндер-жемчугом, активируемые водой, люками или редстоуном).', punishment: 'Блокировка от 3 до 7 дней', severity: 'ban-med' }
+      { id: '3.6', name: 'Уход от PvP через автоматизированные механизмы', desc: 'Запрещено использовать любые стационарные механизмы, конструкции или уязвимости для автоматической телепортации или выхода из боя во время активного режима PvP (например, стазис-камеры с эндер-жемчугом, активируемые водой, люками или редстоуном).', punishment: 'Блокировка от 3 до 7 дней', severity: 'ban-med' },
+      { id: '3.7', name: 'Гриферство и порча чужого имущества (SMP)', desc: 'В режиме SMP запрещено разрушение чужих построек, воровство ресурсов из сундуков без разрешения владельца, заливка лавой/водой чужих территорий и убийство игроков в мирных зонах.', punishment: 'Блокировка от 3 до 7 дней с возможным откатом ущерба', severity: 'ban-med' }
     ]
   },
   {
@@ -50,16 +60,59 @@ const sections = [
     desc: 'Регламент действий при вызове игрока на проверку (Screen-Share / Автоматическая проверка).',
     icon: 'checks',
     rules: [
-      { id: '4.1', name: 'Автоматическая проверка (ApexGuard)', desc: 'Если вы были вызваны на проверку автоматической системой (на сервере появится соответствующее оповещение на весь экран), вам необходимо: 1. Перейти по предоставленной в чате/оповещении одноразовой ссылке; 2. Скачать официальную утилиту проверки ApexGuard; 3. Запустить программу и строго следовать инструкциям внутри приложения. Игнорирование данного требования приравнивается к отказу от проверки.', punishment: 'Приравнивается к отказу от проверки', severity: 'warning' },
-      { id: '4.2', name: 'Отказ или затягивание ручной проверки', desc: 'Превышение выделенного времени на предоставление контактных данных (Discord) или программ для удаленного доступа (AnyDesk), а также игнорирование законных требований проверяющего модератора.', punishment: 'Блокировка по IP на 15 дней', severity: 'ban-high' },
-      { id: '4.3', name: 'Отказ от установки диагностического ПО', desc: 'Нежелание скачивать и запускать программы из утвержденного списка (раздел 5) по требованию модератора.', punishment: 'Блокировка по IP на 15 дней', severity: 'ban-high' },
-      { id: '4.4', name: 'Помеха проведению проверки', desc: 'Вмешательство в процесс работы модератора, самостоятельное закрытие окон, папок или завершение процессов без прямого разрешения.', punishment: 'Блокировка по IP на 15 дней', severity: 'ban-high' },
-      { id: '4.5', name: 'Сокрытие улик', desc: 'Очистка корзины, удаление логов, истории браузера или недавней активности непосредственно перед началом или во время проведения проверки.', punishment: 'Блокировка по IP на 15 дней (приравнивается к использованию запрещенного ПО)', severity: 'ban-high' }
+      { id: '4.1', name: 'Игнорирование вызова или автоматической проверки (ApexGuard)', desc: 'Если вы были вызваны на проверку автоматической системой (уведомление на весь экран) или модератором в чате, вам необходимо строго следовать инструкциям. Игнорирование требований, отсутствие реакции на сообщения или отказ переходить по предоставленной ссылке приравниваются к отказу от проверки.', punishment: 'Блокировка по IP на 15 дней (Приравнивается к отказу)', severity: 'ban-high' },
+      { id: '4.2', name: 'Отказ или выход (лив) с проверки', desc: 'Выход с сервера Minecraft (лив), отключение от голосового канала или сервера Discord, обрыв соединения, закрытие программы удаленного доступа (AnyDesk) во время проведения проверки, а также прямой отказ от её прохождения.', punishment: 'Блокировка по IP на 15 дней', severity: 'ban-high' },
+      { id: '4.3', name: 'Неадекватное поведение и оскорбления при проверке', desc: 'Неуважительное отношение к проверяющему модератору или администрации, неадекватное поведение, агрессия, провокации, троллинг или создание токсичной атмосферы во время проведения проверки.', punishment: 'Блокировка от 3 до 15 дней / Мут до 5 дней', severity: 'ban-med' },
+      { id: '4.4', name: 'Неследование инструкциям администрации и помеха', desc: 'Отказ или намеренное затягивание выполнения законных требований проверяющего модератора, вмешательство в процесс работы, самостоятельное закрытие окон, папок, браузера или завершение процессов в системе без прямого разрешения.', punishment: 'Блокировка по IP на 15 дней', severity: 'ban-high' },
+      { id: '4.5', name: 'Отказ от установки диагностического ПО', desc: 'Нежелание скачивать и запускать официальные программы для проверки (ApexGuard, AnyDesk, Process Hacker и др. из утвержденного списка) по требованию модератора.', punishment: 'Блокировка по IP на 15 дней', severity: 'ban-high' },
+      { id: '4.6', name: 'Сокрытие улик', desc: 'Очистка корзины, удаление логов Minecraft, истории браузера, недавних файлов или очистка реестра непосредственно перед началом или во время проведения проверки.', punishment: 'Блокировка по IP на 15 дней', severity: 'ban-high' }
     ]
   }
 ]
 
-// Approved software database
+const griefSections = [
+  {
+    id: 'discord',
+    title: 'Раздел 1. Правила общения в Discord',
+    desc: 'Регламент взаимодействия на официальном Discord-сервере проекта.',
+    icon: 'discord',
+    rules: smpSections[0].rules
+  },
+  {
+    id: 'chat',
+    title: 'Раздел 2. Правила игрового чата',
+    desc: 'Регламент общения в текстовом чате внутри Minecraft.',
+    icon: 'chat',
+    rules: smpSections[1].rules
+  },
+  {
+    id: 'gameplay',
+    title: 'Раздел 3. Правила игрового процесса (GRIEF)',
+    desc: 'Регулирование честной игры, экономики и безопасности на сервере GRIEF.',
+    icon: 'gameplay',
+    rules: [
+      smpSections[2].rules[0],
+      smpSections[2].rules[1],
+      smpSections[2].rules[2],
+      smpSections[2].rules[3],
+      smpSections[2].rules[4],
+      smpSections[2].rules[5],
+      { id: '3.7', name: 'Гриферство и рейды (GRIEF)', desc: 'В режиме GRIEF разрешены рейды чужих баз, не защищенных приватом, гриферство и свободное PvP в открытом мире. Запрещено только использование багов и уязвимостей для обхода системных приватов.', punishment: 'Игровой процесс / Разрешено', severity: 'warning' }
+    ]
+  },
+  {
+    id: 'checks',
+    title: 'Раздел 4. Порядок проведения проверок на стороннее ПО',
+    desc: 'Регламент действий при вызове игрока на проверку (Screen-Share / Автоматическая проверка).',
+    icon: 'checks',
+    rules: smpSections[3].rules
+  }
+]
+
+const currentSections = computed(() => {
+  return currentMode.value === 'smp' ? smpSections : griefSections
+})
+
 const softwareList = [
   { name: 'ApexGuard', desc: 'Официальная утилита OrbitalMC для автоматического сканирования сессии и выявления инъекций без участия модератора.', role: 'Авто-проверка', type: 'primary' },
   { name: 'AnyDesk', desc: 'Обеспечение удаленного доступа для проведения ручной проверки модератором.', role: 'Удаленный доступ', type: 'access' },
@@ -75,21 +128,19 @@ const softwareList = [
   { name: 'Luyten / Recaf', desc: 'Утилиты для декомпиляции и детального анализа подозрительных модификаций (.jar файлов) на скрытый код.', role: 'Декомпиляция .jar', type: 'utility' }
 ]
 
-// Interactive state
 const searchQuery = ref('')
 const activeSection = ref('all')
 const highlightedRule = ref(null)
 const toastText = ref('')
 const showToast = ref(false)
+const searchInputRef = ref(null)
 
-// Highlight text helper
 const highlightText = (text) => {
   if (!searchQuery.value) return text;
   const regex = new RegExp(`(${searchQuery.value.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')})`, 'gi');
   return text.replace(regex, '<mark>$1</mark>');
 }
 
-// Clipboard API logic
 const copyRule = (id) => {
   const cleanId = id.replace('.', '-')
   const url = `${window.location.origin}${window.location.pathname}#r${cleanId}`
@@ -104,13 +155,12 @@ const copyRule = (id) => {
   })
 }
 
-// Search & filter computed values
 const filteredSections = computed(() => {
   const query = searchQuery.value.toLowerCase().trim()
   
-  return sections.map(s => {
+  return currentSections.value.map(s => {
     const matchedRules = s.rules.filter(r => 
-      r.id.includes(query) ||
+      r.id.toLowerCase().includes(query) ||
       r.name.toLowerCase().includes(query) ||
       r.desc.toLowerCase().includes(query) ||
       r.punishment.toLowerCase().includes(query)
@@ -136,7 +186,6 @@ const filteredSoftware = computed(() => {
   )
 })
 
-// Highlight rule from hash on mount
 onMounted(() => {
   const handleHashChange = () => {
     const hash = window.location.hash
@@ -160,6 +209,13 @@ onMounted(() => {
 
   handleHashChange()
   window.addEventListener('hashchange', handleHashChange)
+
+  window.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault()
+      if (searchInputRef.value) searchInputRef.value.focus()
+    }
+  })
 })
 
 const selectCategory = (catId) => {
@@ -173,11 +229,26 @@ const selectCategory = (catId) => {
     }, 100)
   }
 }
+
+const categories = [
+  { id: 'all', name: 'Все' },
+  { id: 'discord', name: 'Discord' },
+  { id: 'chat', name: 'Чат' },
+  { id: 'gameplay', name: 'Игровой процесс' },
+  { id: 'checks', name: 'Проверки' },
+  { id: 'software', name: 'Софт' }
+]
+
+const resetFiltersAndScrollTop = () => {
+  searchQuery.value = ''
+  activeSection.value = 'all'
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 </script>
 
 <template>
-  <div class="orbital-app-wrapper">
-    <!-- Clean Abstract Grid Background -->
+  <div class="orbital-app-wrapper" :data-mode="currentMode">
+    
     <div class="premium-background">
       <div class="grid-layer"></div>
       <div class="glow-orb red-orb"></div>
@@ -185,23 +256,102 @@ const selectCategory = (catId) => {
       <div class="vignette"></div>
     </div>
 
-    <div class="app-container">
-      
-      <!-- Compact Header -->
-      <header class="hero-section">
-        <div class="hero-content">
-          <h1 class="main-title">Orbital<span class="gradient-text">MC</span></h1>
-          <p class="subtitle">Официальный свод правил игрового сервера</p>
+    <header class="top-navbar">
+      <div class="navbar-container">
+        <div class="navbar-logo" @click="resetFiltersAndScrollTop">
+          <span class="logo-text">Orbital<span class="gradient-text">MC</span></span>
+          <span class="logo-subtext">Правила</span>
         </div>
-      </header>
-
-
-
-
-      <!-- Main Content -->
-      <main class="rules-main-content">
         
-        <!-- Empty State -->
+        <div class="navbar-search">
+          <div class="search-wrapper">
+            <svg class="search-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input 
+              ref="searchInputRef"
+              v-model="searchQuery" 
+              type="text" 
+              placeholder="Поиск..." 
+              class="search-input"
+            />
+            <div class="search-shortcut" v-if="!searchQuery">⌘ K</div>
+            <button v-if="searchQuery" @click="searchQuery = ''" class="clear-search">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="navbar-server-selector">
+          <div class="server-toggle">
+            <button 
+              :class="['server-btn smp-btn', { active: currentMode === 'smp' }]" 
+              @click="switchMode('smp')"
+            >
+              SMP
+            </button>
+            <button 
+              :class="['server-btn grief-btn', { active: currentMode === 'grief' }]" 
+              @click="switchMode('grief')"
+            >
+              GRIEF
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="app-container">
+
+      <nav class="category-nav">
+        <button 
+          v-for="cat in categories" 
+          :key="cat.id"
+          :class="['category-btn', { active: activeSection === cat.id }]"
+          @click="selectCategory(cat.id)"
+        >
+          {{ cat.name }}
+        </button>
+      </nav>
+
+      <section class="info-grid">
+        <div class="info-card">
+          <div class="card-icon-wrapper blue-icon">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <div class="card-text" v-if="currentMode === 'smp'">
+            <h3>Режим SMP (Классическое выживание)</h3>
+            <p>На сервере ценится <strong>честное выживание, экономика и союзы</strong>. Гриферство чужих построек и обман запрещены.</p>
+          </div>
+          <div class="card-text" v-else>
+            <h3>Режим GRIEF (Свободные сражения)</h3>
+            <p>На сервере разрешены <strong>PvP, рейды and гриферство</strong>. Защищайте свои базы приватом и создавайте кланы!</p>
+          </div>
+        </div>
+
+        <div class="info-card">
+          <div class="card-icon-wrapper red-icon">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          </div>
+          <div class="card-text">
+            <h3>Полномочия Администрации</h3>
+            <p>Любые попытки <strong>помехи проверкам, лив или неадекватное поведение</strong> строго наказываются баном по IP.</p>
+          </div>
+        </div>
+      </section>
+
+      <div v-if="searchQuery" class="search-summary">
+        Найдено: <span>{{ filteredSections.reduce((sum, s) => sum + s.rules.length, 0) + filteredSoftware.length }}</span>
+      </div>
+
+      <main class="rules-main-content">
+
         <div v-if="filteredSections.length === 0 && filteredSoftware.length === 0" class="no-results">
           <svg class="w-12 h-12 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -210,7 +360,6 @@ const selectCategory = (catId) => {
           <p>Попробуйте другой запрос</p>
         </div>
 
-        <!-- Render Sections -->
         <section 
           v-for="section in filteredSections" 
           :key="section.id" 
@@ -249,7 +398,6 @@ const selectCategory = (catId) => {
           </div>
         </section>
 
-        <!-- Section 5: Software & Mods Section -->
         <section 
           v-if="filteredSoftware.length > 0 || (searchQuery === '' && (activeSection === 'all' || activeSection === 'software'))"
           id="sec-software" 
@@ -281,39 +429,11 @@ const selectCategory = (catId) => {
         </section>
       </main>
 
-      <!-- Essential Server Info Cards (Moved down) -->
-      <section class="info-grid" style="margin-top: 50px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 40px;">
-        <div class="info-card">
-          <div class="card-icon-wrapper blue-icon">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-            </svg>
-          </div>
-          <div class="card-text">
-            <h3>Свободные Сражения</h3>
-            <p>На сервере разрешены <strong>PvP и гриферство</strong>. Выживание и союзы — часть процесса.</p>
-          </div>
-        </div>
-
-        <div class="info-card">
-          <div class="card-icon-wrapper red-icon">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-          </div>
-          <div class="card-text">
-            <h3>Полномочия Администрации</h3>
-            <p>Администрация может ограничивать доступ за деструктивные действия вне правил.</p>
-          </div>
-        </div>
-      </section>
-
       <footer class="rules-footer">
         <p>&copy; 2026 OrbitalMC. Все права защищены.</p>
       </footer>
     </div>
 
-    <!-- Notification Toast -->
     <transition name="toast-fade">
       <div v-if="showToast" class="toast">
         <span>{{ toastText }}</span>
@@ -323,7 +443,7 @@ const selectCategory = (catId) => {
 </template>
 
 <style scoped>
-/* Server Palette Variables */
+
 .orbital-app-wrapper {
   --c-header: #FF6E7A;
   --c-number: #FF9BA7;
@@ -351,7 +471,7 @@ const selectCategory = (catId) => {
   box-sizing: border-box;
   display: flex;
   justify-content: center;
-  padding: 30px 20px;
+  padding: 94px 20px 30px 20px;
   background-color: var(--bg-base);
   color: var(--c-light-gray);
   font-family: var(--font-sans);
@@ -359,7 +479,6 @@ const selectCategory = (catId) => {
   overflow-x: hidden;
 }
 
-/* SVG Utilities */
 .w-4 { width: 1rem; }
 .h-4 { height: 1rem; }
 .w-5 { width: 1.25rem; }
@@ -371,7 +490,6 @@ const selectCategory = (catId) => {
 .w-12 { width: 3rem; }
 .h-12 { height: 3rem; }
 
-/* Typography and Highlighting */
 h1, h2, h3, h4 { color: var(--c-text); margin: 0; }
 p { line-height: 1.5; margin: 0; }
 
@@ -382,7 +500,6 @@ p { line-height: 1.5; margin: 0; }
   padding: 0 2px;
 }
 
-/* Premium Background */
 .premium-background {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -398,61 +515,79 @@ p { line-height: 1.5; margin: 0; }
     linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
   background-size: 40px 40px;
-  mask-image: radial-gradient(circle at center, black 30%, transparent 80%);
+  mask-image: radial-gradient(circle at center, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 80%);
 }
 
 .glow-orb {
   position: absolute;
   border-radius: 50%;
   filter: blur(120px);
-  opacity: 0.15;
-  animation: orbDrift 20s infinite alternate ease-in-out;
+  opacity: 0.25;
 }
 
 .red-orb {
-  width: 60vw; height: 60vh;
-  background: var(--c-header);
-  top: -20%; right: -10%;
+  width: 450px; height: 450px;
+  background: radial-gradient(circle, var(--c-header) 0%, transparent 70%);
+  top: -100px; left: 10%;
 }
 
 .blue-orb {
-  width: 50vw; height: 50vh;
-  background: var(--c-soft-blue);
-  bottom: -10%; left: -20%;
-  animation-delay: -10s;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #4A6FFF 0%, transparent 70%);
+  bottom: 10%; right: 5%;
 }
 
 .vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, transparent 40%, var(--bg-base) 100%);
+  background: radial-gradient(circle at center, transparent 30%, var(--bg-base) 95%);
 }
 
-@keyframes orbDrift {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(-50px, 50px); }
-}
-
-/* Layout */
 .app-container {
   width: 100%;
-  max-width: 860px;
-  z-index: 1;
+  max-width: 900px;
   position: relative;
+  z-index: 1;
 }
 
-/* Compact Hero */
-.hero-section {
-  text-align: center;
-  padding: 40px 20px;
-  margin-bottom: 20px;
+.top-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(17, 17, 17, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.main-title {
-  font-size: 2.5rem;
+.navbar-container {
+  width: 100%;
+  max-width: 900px;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.logo-text {
+  font-size: 1.3rem;
   font-weight: 800;
-  letter-spacing: -1px;
-  margin-bottom: 8px;
+  letter-spacing: -0.5px;
 }
 
 .gradient-text {
@@ -461,17 +596,197 @@ p { line-height: 1.5; margin: 0; }
   -webkit-text-fill-color: transparent;
 }
 
-.subtitle {
+.logo-subtext {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
   color: var(--c-mid-gray);
-  font-size: 1rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-/* Info Grid */
+.navbar-search {
+  flex: 1;
+  max-width: 420px;
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--c-mid-gray);
+}
+
+.search-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 12px 8px 36px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.orbital-app-wrapper[data-mode="smp"] .search-input:focus {
+  border-color: rgba(100, 150, 255, 0.5);
+  box-shadow: 0 0 10px rgba(100, 150, 255, 0.15);
+}
+
+.orbital-app-wrapper[data-mode="grief"] .search-input:focus {
+  border-color: rgba(255, 110, 122, 0.5);
+  box-shadow: 0 0 10px rgba(255, 110, 122, 0.15);
+}
+
+.search-shortcut {
+  position: absolute;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--c-mid-gray);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.clear-search {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--c-mid-gray);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-search:hover {
+  color: var(--c-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-server-selector {
+  display: flex;
+  align-items: center;
+}
+
+.server-toggle {
+  display: flex;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.server-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--c-mid-gray);
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.server-btn:hover {
+  color: #fff;
+}
+
+.server-btn.active.smp-btn {
+  background: rgba(100, 150, 255, 0.12);
+  color: #a3c2ff;
+  border-color: rgba(100, 150, 255, 0.3);
+  box-shadow: 0 0 10px rgba(100, 150, 255, 0.1);
+}
+
+.server-btn.active.grief-btn {
+  background: rgba(255, 110, 122, 0.12);
+  color: #ff9bab;
+  border-color: rgba(255, 110, 122, 0.3);
+  box-shadow: 0 0 10px rgba(255, 110, 122, 0.1);
+}
+
+.category-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 4px 12px 4px;
+  margin-bottom: 24px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.category-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.category-btn {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 8px 18px;
+  color: var(--c-mid-gray);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.category-btn:hover {
+  color: var(--c-text);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.category-btn.active {
+  color: #ffffff;
+}
+
+.orbital-app-wrapper[data-mode="smp"] .category-btn.active {
+  background: rgba(100, 150, 255, 0.15);
+  border-color: rgba(100, 150, 255, 0.4);
+  box-shadow: 0 0 12px rgba(100, 150, 255, 0.15);
+}
+
+.orbital-app-wrapper[data-mode="grief"] .category-btn.active {
+  background: rgba(255, 110, 122, 0.15);
+  border-color: rgba(255, 110, 122, 0.4);
+  box-shadow: 0 0 12px rgba(255, 110, 122, 0.15);
+}
+
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin-bottom: 30px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 640px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .info-card {
@@ -497,96 +812,24 @@ p { line-height: 1.5; margin: 0; }
 .card-text h3 { font-size: 1rem; margin-bottom: 4px; }
 .card-text p { font-size: 0.85rem; color: var(--c-mid-gray); }
 
-/* Control Panel */
-.control-panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 30px;
-  backdrop-filter: blur(10px);
+.search-summary {
+  font-size: 0.85rem; color: var(--c-mid-gray); margin-bottom: 20px; padding-left: 4px;
 }
+.search-summary span { color: var(--c-text); font-weight: 600; }
 
-.search-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.search-icon {
-  position: absolute; left: 16px; color: var(--c-mid-gray);
-}
-
-.search-input {
-  width: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  padding: 14px 44px;
-  color: var(--c-text);
-  font-family: var(--font-sans);
-  font-size: 0.95rem;
-  outline: none;
-  transition: var(--transition-fast);
-}
-
-.search-input:focus {
-  border-color: var(--c-header);
-  background: rgba(0, 0, 0, 0.6);
-  box-shadow: 0 0 0 3px rgba(255, 110, 122, 0.15);
-}
-
-.search-shortcut {
-  position: absolute; right: 16px;
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--c-mid-gray);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.clear-search {
-  position: absolute; right: 16px;
-  background: none; border: none; color: var(--c-mid-gray);
-  cursor: pointer; padding: 4px; border-radius: 50%;
-}
-.clear-search:hover { color: var(--c-text); background: rgba(255,255,255,0.1); }
-
-.navigation-tabs {
-  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-}
-
-.tab-btn {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 8px 16px;
-  color: var(--c-mid-gray);
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tab-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--c-text);
-  border-color: rgba(255,255,255,0.15);
-}
-
-.tab-btn.active {
-  background: rgba(255, 110, 122, 0.15);
-  border-color: var(--c-header);
-  color: #fff;
-  box-shadow: 0 0 15px rgba(255, 110, 122, 0.2);
-}
-
-/* Lists */
 .rules-main-content {
   display: flex; flex-direction: column; gap: 40px;
+}
+
+.no-results {
+  text-align: center; padding: 60px 20px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 16px;
+}
+.no-results svg { margin: 0 auto 16px; }
+.no-results h4 { font-size: 1.2rem; margin-bottom: 6px; }
+.no-results p { color: var(--c-mid-gray); font-size: 0.9rem; }
+
+.rules-section {
+  scroll-margin-top: 80px;
 }
 
 .section-header {
@@ -644,98 +887,145 @@ p { line-height: 1.5; margin: 0; }
 .rule-footer {
   display: flex; align-items: center; gap: 8px;
   font-size: 0.85rem;
+  flex-wrap: wrap;
 }
 
 .punishment-label { color: var(--c-mid-gray); }
 .punishment-text { font-weight: 600; }
 
-.mute-low { color: var(--c-soft-aqua); }
-.mute { color: var(--c-soft-blue); }
-.mute-high { color: #f97316; }
-.mute-med { color: #f59e0b; }
-.warning { color: var(--c-soft-blue); }
-.ban-med { color: var(--c-number); }
-.ban-high { color: var(--c-header); }
+.mute-low { color: var(--c-soft-green); }
+.mute, .mute-med { color: #FFE49E; }
+.mute-high { color: #FFB86B; }
+.ban-med { color: #FF8B8B; }
+.ban-high { color: #FF5C5C; text-shadow: 0 0 10px rgba(255,92,92,0.3); }
+.warning { color: var(--c-soft-aqua); }
 
-/* Software Section */
+.software-section .section-header { margin-bottom: 24px; }
+
 .mods-card {
-  background: rgba(211, 214, 255, 0.05);
-  border: 1px solid rgba(211, 214, 255, 0.2);
-  border-radius: 12px;
-  padding: 18px;
-  margin-bottom: 20px;
+  background: linear-gradient(135deg, rgba(212, 255, 211, 0.05) 0%, rgba(0,0,0,0) 100%);
+  border: 1px solid rgba(212, 255, 211, 0.2);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 24px;
   position: relative;
 }
 
 .mods-badge {
-  position: absolute; top: 18px; right: 18px;
-  background: rgba(212, 255, 211, 0.1);
+  display: inline-block;
+  background: rgba(212, 255, 211, 0.15);
   color: var(--c-soft-green);
-  font-family: var(--font-mono);
-  font-size: 0.7rem; font-weight: 600;
-  padding: 2px 8px; border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.mods-content h3 { font-size: 1.1rem; margin-bottom: 6px; }
-.mods-content p { font-size: 0.9rem; color: var(--c-mid-gray); margin-bottom: 10px; }
+.mods-content h3 { font-size: 1.1rem; margin-bottom: 6px; color: #fff; }
+.mods-content p { font-size: 0.9rem; color: var(--c-light-gray); margin-bottom: 12px; }
 
 .important-marker {
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.05);
-  border-left: 2px solid var(--c-soft-blue);
-  padding: 6px 12px;
-  font-size: 0.85rem;
-  color: var(--c-light-gray);
-  border-radius: 0 6px 6px 0;
+  font-size: 0.85rem; font-weight: 600; color: var(--c-soft-green);
+  display: flex; align-items: center; gap: 8px;
 }
+.important-marker::before { content: '✓'; font-weight: 800; }
 
 .software-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
 }
 
 .sw-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 14px;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex; flex-direction: column; justify-content: space-between;
 }
 
-.sw-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.sw-name { font-weight: 600; color: var(--c-text); font-size: 0.95rem;}
-.sw-tag { 
-  font-family: var(--font-mono); font-size: 0.7rem; 
-  background: rgba(255,255,255,0.05); color: var(--c-mid-gray); 
-  padding: 2px 6px; border-radius: 4px;
+.sw-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px;
 }
 
-.sw-desc { font-size: 0.85rem; color: var(--c-mid-gray); }
+.sw-name { font-weight: 700; font-size: 0.95rem; color: #fff; }
 
-/* Utilities */
-.search-summary { font-size: 0.85rem; color: var(--c-mid-gray); margin-bottom: 16px; padding-left: 4px; }
-.search-summary span { color: var(--c-header); font-weight: 600; }
+.sw-tag {
+  font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.05); color: var(--c-mid-gray);
+  white-space: nowrap;
+}
 
-.no-results { text-align: center; padding: 40px; color: var(--c-mid-gray); }
-.no-results h4 { color: var(--c-text); margin: 10px 0 4px; }
+.sw-desc { font-size: 0.85rem; color: var(--c-mid-gray); line-height: 1.4; }
 
-.rules-footer { margin-top: 50px; text-align: center; color: var(--c-mid-gray); font-size: 0.85rem; }
-
-/* Toast */
-.toast {
-  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-  background: rgba(28, 28, 30, 0.9);
-  border: 1px solid var(--border-subtle);
-  padding: 10px 20px;
-  border-radius: 20px;
-  color: var(--c-text);
+.rules-footer {
+  margin-top: 60px;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 24px;
+  text-align: center;
+  color: var(--c-mid-gray);
   font-size: 0.85rem;
-  backdrop-filter: blur(10px);
-  z-index: 1000;
 }
-.toast-fade-enter-active, .toast-fade-leave-active { transition: opacity 0.3s, transform 0.3s; }
-.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; transform: translate(-50%, 10px); }
+
+.toast {
+  position: fixed;
+  bottom: 30px; right: 30px;
+  background: #222226;
+  border: 1px solid var(--c-header);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 15px rgba(255, 110, 122, 0.2);
+  z-index: 100;
+}
+
+.toast-fade-enter-active, .toast-fade-leave-active { transition: opacity 0.3s ease, transform 0.3s ease; }
+.toast-fade-enter-from, .toast-fade-leave-to { opacity: 0; transform: translateY(10px); }
 
 @media (max-width: 768px) {
-  .info-grid, .software-grid { grid-template-columns: 1fr; }
-  .main-title { font-size: 2rem; }
+  .orbital-app-wrapper {
+    padding: 180px 16px 30px 16px;
+  }
+  
+  .rules-section {
+    scroll-margin-top: 175px;
+  }
+  
+  .top-navbar {
+    height: auto;
+    padding: 14px 0;
+  }
+  
+  .navbar-container {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .navbar-logo {
+    justify-content: center;
+  }
+  
+  .navbar-search {
+    max-width: 100%;
+  }
+  
+  .navbar-server-selector {
+    justify-content: center;
+  }
+  
+  .server-toggle {
+    width: 100%;
+  }
+  
+  .server-btn {
+    flex: 1;
+    text-align: center;
+  }
 }
 </style>
